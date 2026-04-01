@@ -7,7 +7,8 @@ import (
 )
 
 type UpdateOptions struct {
-	Alias string
+	Alias    string
+	NewAlias string
 	config.RepoConfig
 }
 
@@ -24,6 +25,7 @@ func New() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVarP(&opts.NewAlias, "alias", "a", "", "New alias for the repository")
 	cmd.Flags().StringVarP(&opts.Path, "path", "p", "", "Path to the repository")
 	cmd.Flags().StringVarP(&opts.Branch, "branch", "b", "", "Default branch to use for this repository")
 	cmd.Flags().StringArrayVarP(&opts.Hooks.Setup, "setup", "s", nil, "Commands to run after cloning the repository")

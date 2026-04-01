@@ -50,11 +50,29 @@ func update(opts *UpdateOptions, cmd *cobra.Command) error {
 		}
 	}
 
+	aliasUpdated := false
+
+	// alias update should be at the end to avoid conflicts when renaming the repository
+	if cmd.Flags().Changed("alias") {
+		if _, exists := c.Repos[opts.NewAlias]; exists {
+			return fmt.Errorf("repository '%s' already exists", opts.NewAlias)
+		}
+
+		delete(c.Repos, opts.Alias)
+		c.Repos[opts.NewAlias] = repo
+
+		aliasUpdated = true
+	}
+
 	if err := c.Save(); err != nil {
 		return err
 	}
 
-	fmt.Printf("Repository '%s' updated successfully.\n", opts.Alias)
+	if aliasUpdated {
+		fmt.Printf("Repository '%s' updated successfully (new alias: '%s').\n", opts.Alias, opts.NewAlias)
+	} else {
+		fmt.Printf("Repository '%s' updated successfully.\n", opts.Alias)
+	}
 
 	return nil
 }
