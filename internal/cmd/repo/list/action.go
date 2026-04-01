@@ -16,7 +16,7 @@ func list() error {
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
-	_, err = fmt.Fprintf(w, "ALIAS\tREPO\tBRANCH\tHOOKS\n")
+	_, err = fmt.Fprintf(w, "ALIAS\tREPO\tBRANCH\tSETUPS\n")
 	if err != nil {
 		return err
 	}
