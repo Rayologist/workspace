@@ -18,5 +18,7 @@ func New() *cobra.Command {
 	// subcommands
 	cmd.AddCommand(repoCmd.New())
 
+	cmd.SilenceUsage = true
+
 	return cmd
 }

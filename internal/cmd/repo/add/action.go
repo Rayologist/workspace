@@ -5,7 +5,6 @@ import (
 
 	"workspace/internal/config"
 	"workspace/internal/git"
-	"workspace/internal/set"
 )
 
 func add(opts *AddOptions) error {
@@ -22,34 +21,8 @@ func add(opts *AddOptions) error {
 		return err
 	}
 
-	// add command should be idempotent, so if the alias already exists, we should update it instead of returning an error
-	if repo, exists := c.Repos[opts.Alias]; exists {
-
-		if repo.Path != opts.Path {
-			repo.Path = opts.Path
-		}
-
-		if repo.Branch != opts.Branch {
-			repo.Branch = opts.Branch
-		}
-
-		if opts.Hooks.Setup != nil {
-			configSet := set.FromSlice(repo.Hooks.Setup)
-			for _, hook := range opts.Hooks.Setup {
-				if !configSet.Contains(hook) {
-					repo.Hooks.Setup = append(repo.Hooks.Setup, hook)
-				}
-			}
-		}
-
-		err := c.Save()
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("Repository '%s' updated successfully.\n", opts.Alias)
-
-		return nil
+	if _, exists := c.Repos[opts.Alias]; exists {
+		return fmt.Errorf("repository '%s' already exists (use 'repo update' to modify it)", opts.Alias)
 	}
 
 	repo := &config.RepoConfig{}
