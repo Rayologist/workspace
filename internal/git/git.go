@@ -13,7 +13,7 @@ func git(dir string, args ...string) (string, error) {
 	cmd.Dir = dir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("git %s: %w\n%s", args[0], err, out)
+		return "", fmt.Errorf("git %s: %w\n%s", strings.Join(args, " "), err, out)
 	}
 	return strings.TrimSpace(string(out)), nil
 }
@@ -22,7 +22,7 @@ func ValidateRepo(path string) error {
 	info, err := os.Stat(filepath.Join(path, ".git"))
 
 	if os.IsNotExist(err) {
-		return fmt.Errorf("not a git repository: %s", path)
+		return fmt.Errorf("directory not exists: %s", path)
 	}
 
 	if err != nil {
@@ -38,9 +38,18 @@ func ValidateRepo(path string) error {
 
 func ValidateBranch(path, branch string) error {
 	_, err := git(path, "rev-parse", "--verify", "--quiet", "refs/heads/"+branch)
-	if err != nil {
-		return fmt.Errorf("branch '%s' does not exist in repository", branch)
+
+	return err
+}
+
+func DeleteBranch(path, branch string, force bool) error {
+	flag := "-d"
+
+	if force {
+		flag = "-D"
 	}
 
-	return nil
+	_, err := git(path, "--no-optional-locks", "branch", flag, branch)
+
+	return err
 }
