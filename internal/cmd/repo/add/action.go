@@ -3,8 +3,8 @@ package add
 import (
 	"fmt"
 
+	"workspace/internal/cmd/repo/shared"
 	"workspace/internal/config"
-	"workspace/internal/git"
 )
 
 func add(opts *AddOptions) error {
@@ -13,25 +13,14 @@ func add(opts *AddOptions) error {
 		return err
 	}
 
-	if err := git.ValidateRepo(opts.Path); err != nil {
+	err = shared.NewAddRepoBuilder(c, opts.Alias).
+		Path(opts.Path).
+		Branch(opts.Branch).
+		SetupHookAppend(opts.Hooks.Setup).
+		Commit()
+	if err != nil {
 		return err
 	}
-
-	if err := git.ValidateBranch(opts.Path, opts.Branch); err != nil {
-		return err
-	}
-
-	if _, exists := c.Repos[opts.Alias]; exists {
-		return fmt.Errorf("repository '%s' already exists (use 'repo update' to modify it)", opts.Alias)
-	}
-
-	repo := &config.RepoConfig{}
-
-	repo.Path = opts.Path
-	repo.Branch = opts.Branch
-	repo.Hooks.Setup = opts.Hooks.Setup
-
-	c.Repos[opts.Alias] = repo
 
 	err = c.Save()
 	if err != nil {

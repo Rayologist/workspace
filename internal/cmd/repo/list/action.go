@@ -3,6 +3,7 @@ package list
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"text/tabwriter"
 
 	"workspace/internal/config"
@@ -22,7 +23,17 @@ func list() error {
 	}
 
 	for k, v := range c.Repos {
-		_, err := fmt.Fprintf(w, "%s\t%s\t%s\t%v\n", k, v.Path, v.Branch, len(v.Hooks.Setup))
+		wd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+
+		relPath, err := filepath.Rel(wd, v.Path)
+		if err != nil {
+			relPath = v.Path
+		}
+
+		_, err = fmt.Fprintf(w, "%s\t%s\t%s\t%v\n", k, relPath, v.Branch, len(v.Hooks.Setup))
 		if err != nil {
 			return err
 		}

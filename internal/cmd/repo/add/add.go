@@ -16,7 +16,7 @@ func New() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "add <alias> [path]",
-		Args:  cobra.MinimumNArgs(2),
+		Args:  cobra.ExactArgs(2),
 		Short: "Register a source repository in the workspace",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.Alias = args[0]

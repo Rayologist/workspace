@@ -12,11 +12,10 @@ func remove(opts *RemoveOptions) error {
 		return err
 	}
 
-	if _, exists := c.Repos[opts.Alias]; !exists {
-		return fmt.Errorf("repository '%s' not found", opts.Alias)
+	err = c.RemoveRepo(opts.Alias)
+	if err != nil {
+		return err
 	}
-
-	delete(c.Repos, opts.Alias)
 
 	if err := c.Save(); err != nil {
 		return err
