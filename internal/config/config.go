@@ -14,32 +14,9 @@ const (
 	ConfigFile    = "ws.yaml"
 )
 
-type (
-	Repos      map[string]*RepoConfig
-	Workspaces map[string]*WorkspaceConfig
-)
-
 type Config struct {
-	Repos      Repos      `yaml:"repos,omitempty"`
-	Workspaces Workspaces `yaml:"workspaces,omitempty"`
-}
-
-type RepoConfig struct {
-	Path   string      `yaml:"path"`
-	Branch string      `yaml:"branch,omitempty"`
-	Hooks  HooksConfig `yaml:"hooks,omitempty"`
-}
-
-type HooksConfig struct {
-	Setup []string `yaml:"setup,omitempty"`
-}
-
-type WorkspaceConfig struct {
-	Repos map[string]*WorkspaceRepoConfig `yaml:"repos"`
-}
-
-type WorkspaceRepoConfig struct {
-	Branch string `yaml:"branch"`
+	Repos      RepoConfigs      `yaml:"repos,omitempty"`
+	Workspaces WorkspaceConfigs `yaml:"workspaces,omitempty"`
 }
 
 func WorkspacesDirPath() (string, error) {
@@ -60,8 +37,8 @@ func ConfigPath() (string, error) {
 
 func New() *Config {
 	return &Config{
-		Repos:      make(Repos),
-		Workspaces: make(Workspaces),
+		Repos:      NewRepoConfigs(),
+		Workspaces: NewWorkspaceConfigs(),
 	}
 }
 
@@ -72,8 +49,12 @@ func Load() (*Config, error) {
 	}
 
 	data, err := os.ReadFile(p)
+	if os.IsNotExist(err) {
+		return nil, fmt.Errorf("cannot read %s (run 'ws init' first)", p)
+	}
+
 	if err != nil {
-		return nil, fmt.Errorf("cannot read %s: %w (run 'ws init' first)", p, err)
+		return nil, err
 	}
 
 	var c Config
@@ -82,11 +63,11 @@ func Load() (*Config, error) {
 	}
 
 	if c.Repos == nil {
-		c.Repos = make(Repos)
+		c.Repos = NewRepoConfigs()
 	}
 
 	if c.Workspaces == nil {
-		c.Workspaces = make(Workspaces)
+		c.Workspaces = NewWorkspaceConfigs()
 	}
 
 	return &c, nil
