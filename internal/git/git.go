@@ -22,7 +22,7 @@ func ValidateRepo(path string) error {
 	info, err := os.Stat(filepath.Join(path, ".git"))
 
 	if os.IsNotExist(err) {
-		return fmt.Errorf("directory not exists: %s", path)
+		return fmt.Errorf("path not exists: %s", path)
 	}
 
 	if err != nil {
@@ -38,6 +38,9 @@ func ValidateRepo(path string) error {
 
 func ValidateBranch(path, branch string) error {
 	_, err := git(path, "rev-parse", "--verify", "--quiet", "refs/heads/"+branch)
+	if err != nil {
+		return fmt.Errorf("branch not exists: %s", branch)
+	}
 
 	return err
 }
