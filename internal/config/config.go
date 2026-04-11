@@ -15,6 +15,7 @@ const (
 )
 
 type Config struct {
+	path       string
 	Repos      RepoConfigs      `yaml:"repos,omitempty"`
 	Workspaces WorkspaceConfigs `yaml:"workspaces,omitempty"`
 }
@@ -35,22 +36,18 @@ func ConfigPath() (string, error) {
 	return filepath.Join(wsDir, ConfigFile), nil
 }
 
-func New() *Config {
+func New(path string) *Config {
 	return &Config{
+		path:       path,
 		Repos:      NewRepoConfigs(),
 		Workspaces: NewWorkspaceConfigs(),
 	}
 }
 
-func Load() (*Config, error) {
-	p, err := ConfigPath()
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := os.ReadFile(p)
+func Load(path string) (*Config, error) {
+	data, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
-		return nil, fmt.Errorf("cannot read %s (run 'ws init' first)", p)
+		return nil, fmt.Errorf("cannot read %s (run 'ws init' first)", path)
 	}
 
 	if err != nil {
@@ -62,6 +59,7 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	c.path = path
 	if c.Repos == nil {
 		c.Repos = NewRepoConfigs()
 	}
@@ -74,12 +72,11 @@ func Load() (*Config, error) {
 }
 
 func (c *Config) Save() error {
-	p, err := ConfigPath()
-	if err != nil {
-		return err
+	if c.path == "" {
+		return fmt.Errorf("config path is not set")
 	}
 
-	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(c.path), 0o755); err != nil {
 		return err
 	}
 
@@ -91,7 +88,7 @@ func (c *Config) Save() error {
 		return err
 	}
 
-	return os.WriteFile(p, buf.Bytes(), 0o644)
+	return os.WriteFile(c.path, buf.Bytes(), 0o644)
 }
 
 func (c *Config) RepoAbsPath(alias string) (string, error) {
