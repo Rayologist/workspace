@@ -11,26 +11,26 @@ import (
 	"workspace/internal/git"
 )
 
-func add(opt *AddOptions) error {
-	c, err := config.Load()
+func runAdd(opts *AddOptions) error {
+	c, err := opts.Config()
 	if err != nil {
 		return err
 	}
 
-	_, err = c.Workspace(opt.ProjectName)
+	_, err = c.Workspace(opts.ProjectName)
 	if err == nil {
-		return fmt.Errorf("workspace '%s' already exists", opt.ProjectName)
+		return fmt.Errorf("workspace '%s' already exists", opts.ProjectName)
 	}
 
-	infos := make([]*RepoInfo, len(opt.RepoConfigs))
+	infos := make([]*RepoInfo, len(opts.RepoConfigs))
 
-	for i, repo := range opt.RepoConfigs {
+	for i, repo := range opts.RepoConfigs {
 		info, err := parseRepo(repo)
 		if err != nil {
 			return fmt.Errorf("invalid repo config '%s': %w", repo, err)
 		}
 		if info.Branch == "" {
-			info.Branch = opt.ProjectName
+			info.Branch = opts.ProjectName
 		}
 		infos[i] = info
 	}
@@ -39,12 +39,12 @@ func add(opt *AddOptions) error {
 		repoConfig := &config.WorkspaceRepoConfig{
 			Branch: info.Branch,
 		}
-		if err := c.AddWorkspaceRepo(opt.ProjectName, info.Alias, repoConfig); err != nil {
-			return fmt.Errorf("failed to add repo '%s' to workspace '%s': %w", info.Alias, opt.ProjectName, err)
+		if err := c.AddWorkspaceRepo(opts.ProjectName, info.Alias, repoConfig); err != nil {
+			return fmt.Errorf("failed to add repo '%s' to workspace '%s': %w", info.Alias, opts.ProjectName, err)
 		}
 	}
 
-	w, err := c.Workspace(opt.ProjectName)
+	w, err := c.Workspace(opts.ProjectName)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func add(opt *AddOptions) error {
 			rollbacks[i]()
 		}
 
-		workspacePath := filepath.Join(workspaceDir, opt.ProjectName)
+		workspacePath := filepath.Join(workspaceDir, opts.ProjectName)
 
 		if _, err := os.Stat(workspacePath); err == nil {
 			fmt.Printf("Removing workspace directory '%s'...\n", workspacePath)
@@ -87,7 +87,7 @@ func add(opt *AddOptions) error {
 			return fmt.Errorf("failed to get repo '%s' from config: %w", alias, err)
 		}
 
-		worktreePath := filepath.Join(workspaceDir, opt.ProjectName, alias)
+		worktreePath := filepath.Join(workspaceDir, opts.ProjectName, alias)
 
 		isNewBranch, err := git.AddWorktree(repo.Path, worktreePath, workspaceRepoConfig.Branch)
 		if err != nil {
@@ -127,7 +127,7 @@ func add(opt *AddOptions) error {
 			return fmt.Errorf("failed to get repo '%s' from config: %w", alias, err)
 		}
 
-		worktreePath := filepath.Join(workspaceDir, opt.ProjectName, alias)
+		worktreePath := filepath.Join(workspaceDir, opts.ProjectName, alias)
 
 		for _, hook := range repo.Hooks.Setup {
 			cmd := exec.Command("sh", "-c", hook)
@@ -150,7 +150,7 @@ func add(opt *AddOptions) error {
 
 	success = true
 
-	fmt.Printf("Workspace '%s' created successfully.\n", opt.ProjectName)
+	fmt.Printf("Workspace '%s' created successfully.\n", opts.ProjectName)
 
 	return nil
 }

@@ -1,16 +1,23 @@
 package add
 
 import (
+	"workspace/internal/cli"
+	"workspace/internal/config"
+
 	"github.com/spf13/cobra"
 )
 
 type AddOptions struct {
+	Config func() (*config.Config, error)
+
 	ProjectName string
 	RepoConfigs []string
 }
 
-func New() *cobra.Command {
-	opts := &AddOptions{}
+func New(r *cli.Runtime) *cobra.Command {
+	opts := &AddOptions{
+		Config: r.Config,
+	}
 
 	cmd := &cobra.Command{
 		Use:   "add",
@@ -18,7 +25,7 @@ func New() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.ProjectName = args[0]
-			return add(opts)
+			return runAdd(opts)
 		},
 	}
 
