@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"workspace/internal/cli"
-	"workspace/internal/cmd/repo/shared"
+	"workspace/internal/cmd/source/shared"
 	"workspace/internal/config"
 
 	"github.com/spf13/cobra"

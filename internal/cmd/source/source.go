@@ -1,19 +1,19 @@
-package repo
+package source
 
 import (
 	"workspace/internal/cli"
-	addCmd "workspace/internal/cmd/repo/add"
-	listCmd "workspace/internal/cmd/repo/list"
-	removeCmd "workspace/internal/cmd/repo/remove"
+	addCmd "workspace/internal/cmd/source/add"
+	listCmd "workspace/internal/cmd/source/list"
+	removeCmd "workspace/internal/cmd/source/remove"
 
-	updateCmd "workspace/internal/cmd/repo/update"
+	updateCmd "workspace/internal/cmd/source/update"
 
 	"github.com/spf13/cobra"
 )
 
 func New(r *cli.Runtime) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "repo",
+		Use:   "source",
 		Short: "Manage source repository registrations",
 	}
 

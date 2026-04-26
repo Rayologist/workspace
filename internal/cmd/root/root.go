@@ -2,7 +2,7 @@ package root
 
 import (
 	"workspace/internal/cli"
-	repoCmd "workspace/internal/cmd/repo"
+	sourceCmd "workspace/internal/cmd/source"
 	"workspace/internal/layout"
 
 	addCmd "workspace/internal/cmd/root/add"
@@ -45,7 +45,7 @@ func New(r *cli.Runtime) *cobra.Command {
 	cmd.AddCommand(listCmd.New(r))
 
 	// subcommands
-	cmd.AddCommand(repoCmd.New(r))
+	cmd.AddCommand(sourceCmd.New(r))
 
 	cmd.SilenceUsage = true
 
