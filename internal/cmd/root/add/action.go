@@ -82,14 +82,14 @@ func runAdd(opts *AddOptions) error {
 	}()
 
 	for alias, workspaceRepoConfig := range w.Repos {
-		repo, err := c.RepoByAlias(alias)
+		source, err := c.SourceByAlias(alias)
 		if err != nil {
-			return fmt.Errorf("failed to get repo '%s' from config: %w", alias, err)
+			return fmt.Errorf("failed to get source '%s' from config: %w", alias, err)
 		}
 
 		worktreePath := filepath.Join(workspaceDir, opts.ProjectName, alias)
 
-		isNewBranch, err := git.AddWorktree(repo.Path, worktreePath, workspaceRepoConfig.Branch)
+		isNewBranch, err := git.AddWorktree(source.Path, worktreePath, workspaceRepoConfig.Branch)
 		if err != nil {
 			return fmt.Errorf("failed to add worktree for repo '%s': %w", alias, err)
 		}
@@ -98,13 +98,13 @@ func runAdd(opts *AddOptions) error {
 			rollbacks = append(rollbacks, func() {
 				fmt.Printf("Rolling back new branch '%s' for repo '%s'...\n", workspaceRepoConfig.Branch, alias)
 				fmt.Printf("Removing worktree for repo '%s' at path '%s'...\n", alias, worktreePath)
-				if err := git.RemoveWorktree(repo.Path, worktreePath, false); err != nil {
+				if err := git.RemoveWorktree(source.Path, worktreePath, false); err != nil {
 					fmt.Printf("Failed to remove worktree for repo '%s' during rollback: %v\n", alias, err)
 				}
 				fmt.Printf("Worktree for repo '%s' rolled back successfully.\n", alias)
 
 				fmt.Printf("Deleting new branch '%s' for repo '%s'...\n", workspaceRepoConfig.Branch, alias)
-				if err := git.DeleteBranch(repo.Path, workspaceRepoConfig.Branch, false); err != nil {
+				if err := git.DeleteBranch(source.Path, workspaceRepoConfig.Branch, false); err != nil {
 					fmt.Printf("Failed to delete branch '%s' for repo '%s' during rollback: %v\n", workspaceRepoConfig.Branch, alias, err)
 				}
 				fmt.Printf("Branch '%s' for repo '%s' rolled back successfully.\n", workspaceRepoConfig.Branch, alias)
@@ -112,7 +112,7 @@ func runAdd(opts *AddOptions) error {
 		} else {
 			rollbacks = append(rollbacks, func() {
 				fmt.Printf("Rolling back existing branch worktree for repo '%s'...\n", alias)
-				if err := git.RemoveWorktree(repo.Path, worktreePath, false); err != nil {
+				if err := git.RemoveWorktree(source.Path, worktreePath, false); err != nil {
 					fmt.Printf("Failed to remove worktree for repo '%s' during rollback: %v\n", alias, err)
 				}
 				fmt.Printf("Worktree for repo '%s' rolled back successfully.\n", alias)
@@ -122,16 +122,16 @@ func runAdd(opts *AddOptions) error {
 	}
 
 	for alias := range w.Repos {
-		repo, err := c.RepoByAlias(alias)
+		source, err := c.SourceByAlias(alias)
 		if err != nil {
-			return fmt.Errorf("failed to get repo '%s' from config: %w", alias, err)
+			return fmt.Errorf("failed to get source '%s' from config: %w", alias, err)
 		}
 
 		worktreePath := filepath.Join(workspaceDir, opts.ProjectName, alias)
 
-		for _, hook := range repo.Hooks.Setup {
+		for _, hook := range source.Hooks.Setup {
 			cmd := exec.Command("sh", "-c", hook)
-			cmd.Env = append(os.Environ(), "WS_TARGET="+worktreePath, "WS_SOURCE="+repo.Path)
+			cmd.Env = append(os.Environ(), "WS_TARGET="+worktreePath, "WS_SOURCE="+source.Path)
 			cmd.Dir = worktreePath
 			fmt.Printf("Running setup hook for repo '%s': %s\n", alias, hook)
 			out, err := cmd.CombinedOutput()

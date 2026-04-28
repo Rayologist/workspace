@@ -26,38 +26,38 @@ func (c *Config) Workspace(name string) (*WorkspaceConfig, error) {
 	return w, nil
 }
 
-func (c *Config) AddWorkspaceRepo(workspaceName, repoAlias string, config *WorkspaceRepoConfig) error {
-	if _, err := c.RepoByAlias(repoAlias); err != nil {
+func (c *Config) AddWorkspaceRepo(workspaceName, sourceAlias string, config *WorkspaceRepoConfig) error {
+	if _, err := c.SourceByAlias(sourceAlias); err != nil {
 		return err
 	}
 
 	w, err := c.Workspace(workspaceName)
 
 	if err == nil {
-		w.Repos[repoAlias] = config
+		w.Repos[sourceAlias] = config
 		return nil
 	}
 
 	c.Workspaces[workspaceName] = &WorkspaceConfig{
 		Repos: WorkspaceRepoConfigs{
-			repoAlias: config,
+			sourceAlias: config,
 		},
 	}
 
 	return nil
 }
 
-func (c *Config) UpdateWorkspaceRepoBranch(workspaceName, repoAlias, repoBranch string) error {
+func (c *Config) UpdateWorkspaceRepoBranch(workspaceName, sourceAlias, repoBranch string) error {
 	w, err := c.Workspace(workspaceName)
 	if err != nil {
 		return err
 	}
 
-	if _, err := c.RepoByAlias(repoAlias); err != nil {
+	if _, err := c.SourceByAlias(sourceAlias); err != nil {
 		return err
 	}
 
-	w.Repos[repoAlias] = &WorkspaceRepoConfig{
+	w.Repos[sourceAlias] = &WorkspaceRepoConfig{
 		Branch: repoBranch,
 	}
 	return nil

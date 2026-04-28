@@ -16,7 +16,7 @@ const (
 
 type Config struct {
 	path       string
-	Repos      RepoConfigs      `yaml:"repos,omitempty"`
+	Sources    SourceConfigs    `yaml:"sources,omitempty"`
 	Workspaces WorkspaceConfigs `yaml:"workspaces,omitempty"`
 }
 
@@ -39,7 +39,7 @@ func ConfigPath() (string, error) {
 func New(path string) *Config {
 	return &Config{
 		path:       path,
-		Repos:      NewRepoConfigs(),
+		Sources:    NewSourceConfigs(),
 		Workspaces: NewWorkspaceConfigs(),
 	}
 }
@@ -60,8 +60,8 @@ func Load(path string) (*Config, error) {
 	}
 
 	c.path = path
-	if c.Repos == nil {
-		c.Repos = NewRepoConfigs()
+	if c.Sources == nil {
+		c.Sources = NewSourceConfigs()
 	}
 
 	if c.Workspaces == nil {
@@ -91,14 +91,14 @@ func (c *Config) Save() error {
 	return os.WriteFile(c.path, buf.Bytes(), 0o644)
 }
 
-func (c *Config) RepoAbsPath(alias string) (string, error) {
-	repo, ok := c.Repos[alias]
+func (c *Config) SourceAbsPath(alias string) (string, error) {
+	source, ok := c.Sources[alias]
 	if !ok {
-		return "", fmt.Errorf("repo '%s' not found in config", alias)
+		return "", fmt.Errorf("source '%s' not found in config", alias)
 	}
 
-	if filepath.IsAbs(repo.Path) {
-		return repo.Path, nil
+	if filepath.IsAbs(source.Path) {
+		return source.Path, nil
 	}
 
 	wsDir, err := WorkspacesDirPath()
@@ -106,7 +106,7 @@ func (c *Config) RepoAbsPath(alias string) (string, error) {
 		return "", err
 	}
 
-	abs, err := filepath.Abs(filepath.Join(wsDir, repo.Path))
+	abs, err := filepath.Abs(filepath.Join(wsDir, source.Path))
 	if err != nil {
 		return "", err
 	}

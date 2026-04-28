@@ -8,45 +8,45 @@ import (
 	"workspace/internal/git"
 )
 
-type RepoBuilder struct {
+type SourceBuilder struct {
 	config   *config.Config
-	repo     *config.RepoConfig
+	source   *config.SourceConfig
 	alias    string
 	newAlias string
 	isUpdate bool
 	err      error
 }
 
-func NewAddRepoBuilder(c *config.Config, alias string) *RepoBuilder {
-	b := &RepoBuilder{
+func NewAddSourceBuilder(c *config.Config, alias string) *SourceBuilder {
+	b := &SourceBuilder{
 		config: c,
 		alias:  alias,
-		repo:   &config.RepoConfig{},
+		source: &config.SourceConfig{},
 	}
 
 	return b
 }
 
-func NewUpdateRepoBuilder(c *config.Config, alias string) *RepoBuilder {
-	b := &RepoBuilder{
+func NewUpdateSourceBuilder(c *config.Config, alias string) *SourceBuilder {
+	b := &SourceBuilder{
 		config:   c,
 		alias:    alias,
 		isUpdate: true,
 	}
 
-	repo, err := c.RepoByAlias(alias)
+	source, err := c.SourceByAlias(alias)
 	if err != nil {
 		b.err = err
 		return b
 	}
 
-	copy := *repo
-	b.repo = &copy
+	copy := *source
+	b.source = &copy
 
 	return b
 }
 
-func (b *RepoBuilder) Path(path string) *RepoBuilder {
+func (b *SourceBuilder) Path(path string) *SourceBuilder {
 	if b.err != nil {
 		return b
 	}
@@ -62,39 +62,39 @@ func (b *RepoBuilder) Path(path string) *RepoBuilder {
 		return b
 	}
 
-	b.repo.Path = absPath
+	b.source.Path = absPath
 	return b
 }
 
-func (b *RepoBuilder) Branch(branch string) *RepoBuilder {
+func (b *SourceBuilder) Branch(branch string) *SourceBuilder {
 	if b.err != nil {
 		return b
 	}
 
-	if b.repo.Path == "" {
-		b.err = fmt.Errorf("repository path must be set before validating branch")
+	if b.source.Path == "" {
+		b.err = fmt.Errorf("source path must be set before validating branch")
 		return b
 	}
 
-	if err := git.ValidateBranch(b.repo.Path, branch); err != nil {
+	if err := git.ValidateBranch(b.source.Path, branch); err != nil {
 		b.err = err
 		return b
 	}
 
-	b.repo.Branch = branch
+	b.source.Branch = branch
 	return b
 }
 
-func (b *RepoBuilder) SetupHookAppend(setups []string) *RepoBuilder {
+func (b *SourceBuilder) SetupHookAppend(setups []string) *SourceBuilder {
 	if b.err != nil {
 		return b
 	}
 
-	b.repo.Hooks.AppendSetupHooks(setups)
+	b.source.Hooks.AppendSetupHooks(setups)
 	return b
 }
 
-func (b *RepoBuilder) AliasUpdate(newAlias string) *RepoBuilder {
+func (b *SourceBuilder) AliasUpdate(newAlias string) *SourceBuilder {
 	if b.err != nil {
 		return b
 	}
@@ -103,18 +103,18 @@ func (b *RepoBuilder) AliasUpdate(newAlias string) *RepoBuilder {
 	return b
 }
 
-func (b *RepoBuilder) Commit() error {
+func (b *SourceBuilder) Commit() error {
 	if b.err != nil {
 		return b.err
 	}
 
 	if b.isUpdate {
-		if err := git.ValidateBranch(b.repo.Path, b.repo.Branch); err != nil {
+		if err := git.ValidateBranch(b.source.Path, b.source.Branch); err != nil {
 			return err
 		}
 
-		return b.config.UpdateRepo(b.alias, b.newAlias, b.repo)
+		return b.config.UpdateSource(b.alias, b.newAlias, b.source)
 	}
 
-	return b.config.AddRepo(b.alias, b.repo)
+	return b.config.AddSource(b.alias, b.source)
 }

@@ -51,19 +51,19 @@ func runDoctor(opts *DoctorOptions) error {
 
 	var wg sync.WaitGroup
 
-	size := len(c.Repos)
+	size := len(c.Sources)
 	result := make([]Message, size)
 
 	keys := make([]string, 0, size)
-	for k := range c.Repos {
+	for k := range c.Sources {
 		keys = append(keys, k)
 	}
 
 	for i, key := range keys {
 		wg.Go(
 			func() {
-				r := c.Repos[key]
-				if err := git.ValidateRepo(r.Path); err != nil {
+				source := c.Sources[key]
+				if err := git.ValidateRepo(source.Path); err != nil {
 					result[i] = Message{
 						Alias: key,
 						Error: []string{err.Error()},
@@ -71,7 +71,7 @@ func runDoctor(opts *DoctorOptions) error {
 					return
 				}
 
-				if err := git.ValidateBranch(r.Path, r.Branch); err != nil {
+				if err := git.ValidateBranch(source.Path, source.Branch); err != nil {
 					result[i] = Message{
 						Alias: key,
 						Error: []string{err.Error()},

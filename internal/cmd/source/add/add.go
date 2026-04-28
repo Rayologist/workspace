@@ -14,7 +14,7 @@ type AddOptions struct {
 	Config func() (*config.Config, error)
 
 	Alias string
-	config.RepoConfig
+	config.SourceConfig
 }
 
 func New(r *cli.Runtime) *cobra.Command {
@@ -46,7 +46,7 @@ func runAdd(opts *AddOptions) error {
 		return err
 	}
 
-	err = shared.NewAddRepoBuilder(c, opts.Alias).
+	err = shared.NewAddSourceBuilder(c, opts.Alias).
 		Path(opts.Path).
 		Branch(opts.Branch).
 		SetupHookAppend(opts.Hooks.Setup).

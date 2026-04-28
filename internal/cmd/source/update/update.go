@@ -15,7 +15,7 @@ type UpdateOptions struct {
 
 	Alias    string
 	NewAlias string
-	config.RepoConfig
+	config.SourceConfig
 }
 
 func New(r *cli.Runtime) *cobra.Command {
@@ -47,7 +47,7 @@ func runUpdate(opts *UpdateOptions, cmd *cobra.Command) error {
 		return err
 	}
 
-	builder := shared.NewUpdateRepoBuilder(c, opts.Alias)
+	builder := shared.NewUpdateSourceBuilder(c, opts.Alias)
 
 	if cmd.Flags().Changed("alias") {
 		builder.AliasUpdate(opts.NewAlias)

@@ -47,7 +47,7 @@ func runList(opts *ListOptions) error {
 	fmt.Fprintf(w, "ALIAS\tREPO\tBRANCH\tSETUPS\n")
 
 	layout := opts.Layout()
-	for k, v := range c.Repos {
+	for k, v := range c.Sources {
 		relPath, err := filepath.Rel(layout.Root(), v.Path)
 		if err != nil {
 			relPath = v.Path
