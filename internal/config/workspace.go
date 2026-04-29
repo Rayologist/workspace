@@ -47,6 +47,21 @@ func (c *Config) AddWorkspaceRepo(workspaceName, sourceAlias string, config *Wor
 	return nil
 }
 
+func (c *Config) RemoveWorkspaceRepo(workspaceName, sourceAlias string) error {
+	w, err := c.Workspace(workspaceName)
+	if err != nil {
+		return err
+	}
+
+	_, exists := w.Repos[sourceAlias]
+	if !exists {
+		return fmt.Errorf("repo with source alias '%s' not found in workspace '%s'", sourceAlias, workspaceName)
+	}
+
+	delete(w.Repos, sourceAlias)
+	return nil
+}
+
 func (c *Config) UpdateWorkspaceRepoBranch(workspaceName, sourceAlias, repoBranch string) error {
 	w, err := c.Workspace(workspaceName)
 	if err != nil {
