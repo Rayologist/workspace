@@ -6,3 +6,4 @@ linters:
         - fmt.Fprintf
         - fmt.Fprintln
         - fmt.Fprint
+        - (*github.com/spf13/cobra.Command).MarkFlagRequired
