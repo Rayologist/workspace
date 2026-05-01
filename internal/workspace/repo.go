@@ -11,10 +11,10 @@ import (
 )
 
 type AttachRepoArgs struct {
-	WorkspacesDir string
-	ProjectName   string
-	SourceAlias   string
-	SourceBranch  string
+	WorkspacesDir   string
+	TargetWorkspace string
+	SourceAlias     string
+	SourceBranch    string
 }
 
 func AttachRepo(c *config.Config, args AttachRepoArgs) (rollback func(), err error) {
@@ -27,15 +27,15 @@ func AttachRepo(c *config.Config, args AttachRepoArgs) (rollback func(), err err
 		Branch: args.SourceBranch,
 	}
 
-	if err := c.AddWorkspaceRepo(args.ProjectName, args.SourceAlias, repoConfig); err != nil {
-		return nil, fmt.Errorf("failed to add repo '%s' to workspace '%s': %w", args.SourceAlias, args.ProjectName, err)
+	if err := c.AddWorkspaceRepo(args.TargetWorkspace, args.SourceAlias, repoConfig); err != nil {
+		return nil, fmt.Errorf("failed to add repo '%s' to workspace '%s': %w", args.SourceAlias, args.TargetWorkspace, err)
 	}
 
-	worktreePath := filepath.Join(args.WorkspacesDir, args.ProjectName, args.SourceAlias)
+	worktreePath := filepath.Join(args.WorkspacesDir, args.TargetWorkspace, args.SourceAlias)
 
 	isNewBranch, err := git.AddWorktree(source.Path, worktreePath, args.SourceBranch)
 	if err != nil {
-		_ = c.RemoveWorkspaceRepo(args.ProjectName, args.SourceAlias)
+		_ = c.RemoveWorkspaceRepo(args.TargetWorkspace, args.SourceAlias)
 		return nil, fmt.Errorf("failed to add worktree for '%s': %w", args.SourceAlias, err)
 	}
 
@@ -50,8 +50,8 @@ func AttachRepo(c *config.Config, args AttachRepoArgs) (rollback func(), err err
 				fmt.Printf("Failed to delete branch '%s' for '%s' during rollback: %v\n", args.SourceBranch, args.SourceAlias, err)
 			}
 		}
-		if err := c.RemoveWorkspaceRepo(args.ProjectName, args.SourceAlias); err != nil {
-			fmt.Printf("Failed to remove repo '%s' from workspace config '%s' during rollback: %v\n", args.SourceAlias, args.ProjectName, err)
+		if err := c.RemoveWorkspaceRepo(args.TargetWorkspace, args.SourceAlias); err != nil {
+			fmt.Printf("Failed to remove repo '%s' from workspace config '%s' during rollback: %v\n", args.SourceAlias, args.TargetWorkspace, err)
 		}
 
 		fmt.Printf("Rollback for '%s' completed.\n", args.SourceAlias)

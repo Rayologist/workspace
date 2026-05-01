@@ -27,7 +27,7 @@ func New(r *cli.Runtime) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "List projects in the workspace",
+		Short: "List source repositories",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runList(opts)
 		},

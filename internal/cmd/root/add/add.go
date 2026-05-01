@@ -15,8 +15,8 @@ import (
 type AddOptions struct {
 	Config func() (*config.Config, error)
 
-	ProjectName string
-	RepoConfigs []string
+	TargetWorkspace string
+	RepoConfigs     []string
 }
 
 func New(r *cli.Runtime) *cobra.Command {
@@ -26,15 +26,15 @@ func New(r *cli.Runtime) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "add",
-		Short: "Add a new project to the workspace",
+		Short: "Add a new workspace",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			opts.ProjectName = args[0]
+			opts.TargetWorkspace = args[0]
 			return runAdd(opts)
 		},
 	}
 
-	cmd.Flags().StringArrayVarP(&opts.RepoConfigs, "repo", "r", []string{}, "Add a repository to the project (branch defaults to 'main', if not specified) - format: <alias>[:<branch>]")
+	cmd.Flags().StringArrayVarP(&opts.RepoConfigs, "repo", "r", []string{}, "Add a repository to the target (branch defaults to 'main', if not specified) - format: <alias>[:<branch>]")
 	cmd.MarkFlagRequired("repo")
 
 	return cmd
@@ -46,8 +46,8 @@ func runAdd(opts *AddOptions) error {
 		return err
 	}
 
-	if _, err = c.Workspace(opts.ProjectName); err == nil {
-		return fmt.Errorf("workspace '%s' already exists", opts.ProjectName)
+	if _, err = c.Workspace(opts.TargetWorkspace); err == nil {
+		return fmt.Errorf("workspace '%s' already exists", opts.TargetWorkspace)
 	}
 
 	repoConfigs := make([]cli.RepoConfig, len(opts.RepoConfigs))
@@ -55,7 +55,7 @@ func runAdd(opts *AddOptions) error {
 	for i, config := range opts.RepoConfigs {
 		repoConfig := cli.ParseRepoConfig(config)
 		if !repoConfig.HasBranch() {
-			repoConfig.TargetBranch = opts.ProjectName
+			repoConfig.TargetBranch = opts.TargetWorkspace
 		}
 		repoConfigs[i] = repoConfig
 	}
@@ -80,7 +80,7 @@ func runAdd(opts *AddOptions) error {
 			rollbacks[i]()
 		}
 
-		workspacePath := filepath.Join(workspaceDir, opts.ProjectName)
+		workspacePath := filepath.Join(workspaceDir, opts.TargetWorkspace)
 
 		if _, err := os.Stat(workspacePath); err == nil {
 			fmt.Printf("Removing workspace directory '%s'...\n", workspacePath)
@@ -94,10 +94,10 @@ func runAdd(opts *AddOptions) error {
 
 	for _, repoConfig := range repoConfigs {
 		rollback, err := workspace.AttachRepo(c, workspace.AttachRepoArgs{
-			WorkspacesDir: workspaceDir,
-			ProjectName:   opts.ProjectName,
-			SourceAlias:   repoConfig.SourceAlias,
-			SourceBranch:  repoConfig.TargetBranch,
+			WorkspacesDir:   workspaceDir,
+			TargetWorkspace: opts.TargetWorkspace,
+			SourceAlias:     repoConfig.SourceAlias,
+			SourceBranch:    repoConfig.TargetBranch,
 		})
 		if rollback != nil {
 			rollbacks = append(rollbacks, rollback)
@@ -113,7 +113,7 @@ func runAdd(opts *AddOptions) error {
 
 	success = true
 
-	fmt.Printf("Workspace '%s' created successfully.\n", opts.ProjectName)
+	fmt.Printf("Workspace '%s' created successfully.\n", opts.TargetWorkspace)
 
 	return nil
 }
