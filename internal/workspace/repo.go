@@ -20,7 +20,7 @@ type AttachRepoArgs struct {
 func AttachRepo(c *config.Config, args AttachRepoArgs) (rollback func(), err error) {
 	source, err := c.SourceByAlias(args.SourceAlias)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find source '%s' in config: %w", args.SourceAlias, err)
+		return nil, err
 	}
 
 	repoConfig := &config.WorkspaceRepoConfig{

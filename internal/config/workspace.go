@@ -1,29 +1,36 @@
 package config
 
-import "fmt"
-
-type WorkspaceRepoConfig struct {
-	Branch string `yaml:"branch"`
-}
-
 type WorkspaceRepoConfigs map[string]*WorkspaceRepoConfig
 
 type WorkspaceConfig struct {
 	Repos WorkspaceRepoConfigs `yaml:"repos"`
 }
 
-type WorkspaceConfigs map[string]*WorkspaceConfig
-
 func NewWorkspaceConfigs() WorkspaceConfigs {
 	return make(WorkspaceConfigs)
+}
+
+func NewWorkspaceConfig() *WorkspaceConfig {
+	return &WorkspaceConfig{
+		Repos: make(WorkspaceRepoConfigs),
+	}
 }
 
 func (c *Config) Workspace(name string) (*WorkspaceConfig, error) {
 	w, exists := c.Workspaces[name]
 	if !exists {
-		return nil, fmt.Errorf("workspace '%s' not exist in the config", name)
+		return nil, &WorkspaceNotFoundError{Name: name}
 	}
 	return w, nil
+}
+
+func (c *Config) AddWorkspace(name string) error {
+	if _, err := c.Workspace(name); err == nil {
+		return &WorkspaceExistsError{Name: name}
+	}
+	
+	c.Workspaces[name] = NewWorkspaceConfig()
+	return nil
 }
 
 func (c *Config) AddWorkspaceRepo(workspaceName, sourceAlias string, config *WorkspaceRepoConfig) error {
@@ -31,20 +38,9 @@ func (c *Config) AddWorkspaceRepo(workspaceName, sourceAlias string, config *Wor
 		return err
 	}
 
-	w, err := c.Workspace(workspaceName)
+	w := c.ensureWorkspace(workspaceName)
 
-	if err == nil {
-		w.Repos[sourceAlias] = config
-		return nil
-	}
-
-	c.Workspaces[workspaceName] = &WorkspaceConfig{
-		Repos: WorkspaceRepoConfigs{
-			sourceAlias: config,
-		},
-	}
-
-	return nil
+	return w.AddRepo(sourceAlias, config)
 }
 
 func (c *Config) RemoveWorkspaceRepo(workspaceName, sourceAlias string) error {
@@ -53,13 +49,7 @@ func (c *Config) RemoveWorkspaceRepo(workspaceName, sourceAlias string) error {
 		return err
 	}
 
-	_, exists := w.Repos[sourceAlias]
-	if !exists {
-		return fmt.Errorf("repo with source alias '%s' not found in workspace '%s'", sourceAlias, workspaceName)
-	}
-
-	delete(w.Repos, sourceAlias)
-	return nil
+	return w.RemoveRepo(sourceAlias)
 }
 
 func (c *Config) UpdateWorkspaceRepoBranch(workspaceName, sourceAlias, repoBranch string) error {
@@ -72,8 +62,17 @@ func (c *Config) UpdateWorkspaceRepoBranch(workspaceName, sourceAlias, repoBranc
 		return err
 	}
 
-	w.Repos[sourceAlias] = &WorkspaceRepoConfig{
-		Branch: repoBranch,
+	return w.UpdateRepoBranch(sourceAlias, repoBranch)
+}
+
+func (c *Config) ensureWorkspace(name string) *WorkspaceConfig {
+	if w, exists := c.Workspaces[name]; exists {
+		return w
 	}
-	return nil
+
+	w := NewWorkspaceConfig()
+
+	c.Workspaces[name] = w
+
+	return w
 }
