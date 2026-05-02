@@ -18,13 +18,11 @@ type SourceBuilder struct {
 }
 
 func NewAddSourceBuilder(c *config.Config, alias string) *SourceBuilder {
-	b := &SourceBuilder{
+	return &SourceBuilder{
 		config: c,
 		alias:  alias,
 		source: &config.SourceConfig{},
 	}
-
-	return b
 }
 
 func NewUpdateSourceBuilder(c *config.Config, alias string) *SourceBuilder {
@@ -51,8 +49,14 @@ func (b *SourceBuilder) Path(path string) *SourceBuilder {
 		return b
 	}
 
-	if err := git.ValidateRepo(path); err != nil {
+	ok, err := git.IsRepo(path)
+	if err != nil {
 		b.err = err
+		return b
+	}
+
+	if !ok {
+		b.err = fmt.Errorf("path %q is not a valid git repository", path)
 		return b
 	}
 
@@ -76,8 +80,14 @@ func (b *SourceBuilder) Branch(branch string) *SourceBuilder {
 		return b
 	}
 
-	if err := git.ValidateBranch(b.source.Path, branch); err != nil {
+	exists, err := git.BranchExists(b.source.Path, branch)
+	if err != nil {
 		b.err = err
+		return b
+	}
+
+	if !exists {
+		b.err = fmt.Errorf("branch %q does not exist in repository %q", branch, b.source.Path)
 		return b
 	}
 
@@ -109,8 +119,12 @@ func (b *SourceBuilder) Commit() error {
 	}
 
 	if b.isUpdate {
-		if err := git.ValidateBranch(b.source.Path, b.source.Branch); err != nil {
+		exists, err := git.BranchExists(b.source.Path, b.source.Branch)
+		if err != nil {
 			return err
+		}
+		if !exists {
+			return fmt.Errorf("branch %q does not exist in repository %q", b.source.Branch, b.source.Path)
 		}
 
 		return b.config.UpdateSource(b.alias, b.newAlias, b.source)

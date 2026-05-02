@@ -1,9 +1,12 @@
 package git
 
 func AddWorktree(repoPath, worktreePath, branchName string) (bool, error) {
-	err := ValidateBranch(repoPath, branchName)
+	exists, err := BranchExists(repoPath, branchName)
+	if err != nil {
+		return false, err
+	}
 
-	isNewBranch := err != nil
+	isNewBranch := !exists
 
 	args := []string{
 		"--no-optional-locks",

@@ -63,7 +63,8 @@ func runDoctor(opts *DoctorOptions) error {
 		wg.Go(
 			func() {
 				source := c.Sources[key]
-				if err := git.ValidateRepo(source.Path); err != nil {
+				ok, err := git.IsRepo(source.Path)
+				if err != nil {
 					result[i] = Message{
 						Alias: key,
 						Error: []string{err.Error()},
@@ -71,11 +72,30 @@ func runDoctor(opts *DoctorOptions) error {
 					return
 				}
 
-				if err := git.ValidateBranch(source.Path, source.Branch); err != nil {
+				if !ok {
 					result[i] = Message{
 						Alias: key,
-						Error: []string{err.Error()},
+						Error: []string{fmt.Sprintf("Path '%s' is not a valid git repository", source.Path)},
 					}
+
+					return
+				}
+
+				exists, err := git.BranchExists(source.Path, source.Branch)
+				if err != nil {
+					result[i] = Message{
+						Alias: key,
+						Error: []string{fmt.Sprintf("Error checking branch existence: %v", err)},
+					}
+					return
+				}
+
+				if !exists {
+					result[i] = Message{
+						Alias: key,
+						Error: []string{fmt.Sprintf("Branch '%s' does not exist in the repository", source.Branch)},
+					}
+
 					return
 				}
 			})
