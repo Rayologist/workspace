@@ -18,11 +18,7 @@ func AddWorktree(repoPath, worktreePath, branchName string) (bool, error) {
 		args = append(args, worktreePath, branchName)
 	}
 
-	_, err = git(
-		repoPath,
-		args...,
-	)
-	if err != nil {
+	if _, err = git(repoPath, args...); err != nil {
 		return false, err
 	}
 

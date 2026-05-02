@@ -39,8 +39,7 @@ func runRemove(opts *RemoveOptions) error {
 		return err
 	}
 
-	err = c.RemoveSource(opts.Alias)
-	if err != nil {
+	if err := c.RemoveSource(opts.Alias); err != nil {
 		return err
 	}
 

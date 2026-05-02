@@ -46,17 +46,15 @@ func runAdd(opts *AddOptions) error {
 		return err
 	}
 
-	err = shared.NewAddSourceBuilder(c, opts.Alias).
+	builder := shared.NewAddSourceBuilder(c, opts.Alias).
 		Path(opts.Path).
 		Branch(opts.Branch).
-		SetupHookAppend(opts.Hooks.Setup).
-		Commit()
-	if err != nil {
+		SetupHookAppend(opts.Hooks.Setup)
+	if err := builder.Commit(); err != nil {
 		return err
 	}
 
-	err = c.Save()
-	if err != nil {
+	if err := c.Save(); err != nil {
 		return err
 	}
 

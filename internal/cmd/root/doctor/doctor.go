@@ -109,8 +109,7 @@ func runDoctor(opts *DoctorOptions) error {
 		}
 	}
 
-	err = w.Flush()
-	if err != nil {
+	if err := w.Flush(); err != nil {
 		return err
 	}
 

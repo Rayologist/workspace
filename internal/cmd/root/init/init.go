@@ -24,7 +24,7 @@ func New(r *cli.Runtime) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "init",
-		Short: "Initialize a new workspace in the current directory",
+		Short: "Initialize workspace config for the current directory",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runInit(opts)
@@ -48,8 +48,8 @@ func runInit(opts *InitOptions) error {
 	}
 
 	c := config.New(path)
-	err = c.Save()
-	if err != nil {
+
+	if err := c.Save(); err != nil {
 		return err
 	}
 

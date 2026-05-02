@@ -65,8 +65,7 @@ func runUpdate(opts *UpdateOptions, cmd *cobra.Command) error {
 		builder.SetupHookAppend(opts.Hooks.Setup)
 	}
 
-	err = builder.Commit()
-	if err != nil {
+	if err := builder.Commit(); err != nil {
 		return err
 	}
 

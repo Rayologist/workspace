@@ -56,8 +56,7 @@ func runList(opts *ListOptions) error {
 		fmt.Fprintf(w, "%s\t%s\t%s\t%v\n", k, relPath, v.Branch, len(v.Hooks.Setup))
 	}
 
-	err = w.Flush()
-	if err != nil {
+	if err := w.Flush(); err != nil {
 		return err
 	}
 
