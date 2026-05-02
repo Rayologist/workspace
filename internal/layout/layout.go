@@ -64,6 +64,10 @@ func (l *Layout) WorkspacesDir() string {
 	return filepath.Join(l.Root(), l.workspacesDir)
 }
 
+func (l *Layout) WorkspaceDir(name string) string {
+	return filepath.Join(l.WorkspacesDir(), name)
+}
+
 func (l *Layout) ConfigPath() string {
 	return filepath.Join(l.WorkspacesDir(), l.configFile)
 }

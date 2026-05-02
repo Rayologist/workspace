@@ -20,22 +20,6 @@ type Config struct {
 	Workspaces WorkspaceConfigs `yaml:"workspaces,omitempty"`
 }
 
-func WorkspacesDirPath() (string, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(cwd, WorkspacesDir), nil
-}
-
-func ConfigPath() (string, error) {
-	wsDir, err := WorkspacesDirPath()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(wsDir, ConfigFile), nil
-}
-
 func New(path string) *Config {
 	return &Config{
 		path:       path,
@@ -89,27 +73,4 @@ func (c *Config) Save() error {
 	}
 
 	return os.WriteFile(c.path, buf.Bytes(), 0o644)
-}
-
-func (c *Config) SourceAbsPath(alias string) (string, error) {
-	source, ok := c.Sources[alias]
-	if !ok {
-		return "", fmt.Errorf("source '%s' not found in config", alias)
-	}
-
-	if filepath.IsAbs(source.Path) {
-		return source.Path, nil
-	}
-
-	wsDir, err := WorkspacesDirPath()
-	if err != nil {
-		return "", err
-	}
-
-	abs, err := filepath.Abs(filepath.Join(wsDir, source.Path))
-	if err != nil {
-		return "", err
-	}
-
-	return abs, nil
 }

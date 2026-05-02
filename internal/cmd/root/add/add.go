@@ -3,29 +3,29 @@ package add
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"workspace/internal/cli"
 	"workspace/internal/config"
-	"workspace/internal/workspace"
+	"workspace/internal/layout"
 
 	"github.com/spf13/cobra"
 )
 
 type AddOptions struct {
 	Config func() (*config.Config, error)
+	Layout func() *layout.Layout
 
 	TargetWorkspace string
-	RepoConfigs     []string
 }
 
 func New(r *cli.Runtime) *cobra.Command {
 	opts := &AddOptions{
 		Config: r.Config,
+		Layout: r.Layout,
 	}
 
 	cmd := &cobra.Command{
-		Use:   "add",
+		Use:   "add <workspace>",
 		Short: "Add a new workspace",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -33,9 +33,6 @@ func New(r *cli.Runtime) *cobra.Command {
 			return runAdd(opts)
 		},
 	}
-
-	cmd.Flags().StringArrayVarP(&opts.RepoConfigs, "repo", "r", []string{}, "Add a repository to the target (branch defaults to 'main', if not specified) - format: <alias>[:<branch>]")
-	cmd.MarkFlagRequired("repo")
 
 	return cmd
 }
@@ -46,72 +43,17 @@ func runAdd(opts *AddOptions) error {
 		return err
 	}
 
-	if _, err = c.Workspace(opts.TargetWorkspace); err == nil {
-		return fmt.Errorf("workspace '%s' already exists", opts.TargetWorkspace)
-	}
-
-	repoConfigs := make([]cli.RepoConfig, len(opts.RepoConfigs))
-
-	for i, config := range opts.RepoConfigs {
-		repoConfig := cli.ParseRepoConfig(config)
-		if !repoConfig.HasBranch() {
-			repoConfig.TargetBranch = opts.TargetWorkspace
-		}
-		repoConfigs[i] = repoConfig
-	}
-
-	workspaceDir, err := config.WorkspacesDirPath()
-	if err != nil {
+	if err := c.AddWorkspace(opts.TargetWorkspace); err != nil {
 		return err
 	}
 
-	var rollbacks []func()
-	success := false
-
-	defer func() {
-		if success {
-			return
-		}
-
-		fmt.Println("\nErrors occurred during workspace setup.")
-		fmt.Printf("Rolling back changes...\n\n")
-		// LIFO order for rollbacks
-		for i := len(rollbacks) - 1; i >= 0; i-- {
-			rollbacks[i]()
-		}
-
-		workspacePath := filepath.Join(workspaceDir, opts.TargetWorkspace)
-
-		if _, err := os.Stat(workspacePath); err == nil {
-			fmt.Printf("Removing workspace directory '%s'...\n", workspacePath)
-			if err := os.Remove(workspacePath); err != nil && !os.IsNotExist(err) {
-				fmt.Printf("Failed to remove workspace directory '%s' during rollback: %v\n", workspacePath, err)
-			}
-		}
-
-		fmt.Printf("\bRollback completed.\n\n")
-	}()
-
-	for _, repoConfig := range repoConfigs {
-		rollback, err := workspace.AttachRepo(c, workspace.AttachRepoArgs{
-			WorkspacesDir:   workspaceDir,
-			TargetWorkspace: opts.TargetWorkspace,
-			SourceAlias:     repoConfig.SourceAlias,
-			SourceBranch:    repoConfig.TargetBranch,
-		})
-		if rollback != nil {
-			rollbacks = append(rollbacks, rollback)
-		}
-		if err != nil {
-			return err
-		}
+	if err := os.MkdirAll(opts.Layout().WorkspaceDir(opts.TargetWorkspace), 0o755); err != nil {
+		return err
 	}
 
 	if err := c.Save(); err != nil {
-		return fmt.Errorf("failed to save config: %w", err)
+		return err
 	}
-
-	success = true
 
 	fmt.Printf("Workspace '%s' created successfully.\n", opts.TargetWorkspace)
 
